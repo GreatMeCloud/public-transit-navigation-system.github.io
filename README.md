@@ -20,21 +20,7 @@ pip install networkx
 ## Structure
 Backend: OSMnx + NetworkX
 
-Frontend: Undecided
-
-asset/      → Icons/Styles
-
-data/       → Files (raw/config/cache)
-
-src/
-
-  io/       → Data import/export (OSMnx)
-  
-  core/     → World (Graph + State) (NetworkX)
-  
-  algorithm → Pathfinding algorithms 
-  
-  view/     → Folium + UI + Interaction 
+Frontend: web
 
 ## Flow chart
 
