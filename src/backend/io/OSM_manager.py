@@ -19,9 +19,9 @@ def load_osm_data(position):
         print(f"Failed to load OSM data: {e}")
         return None
 
-def save_osm_data(G, filename):
+def save_osm_data(graph, filename):
     try:
-        ox.save_graphml(G, filename)
+        ox.save_graphml(graph, filename)
         print(f"Graph saved to {filename}")
     except Exception as e:
         print(f"Failed to save OSM data: {e}")
