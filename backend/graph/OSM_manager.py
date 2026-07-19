@@ -1,11 +1,9 @@
-# 👉source: https://osmnx.readthedocs.io/en/stable/index.html
-
 # load specific OSM data for a given area
 
 import osmnx as ox
 
 def load_osm_data(position):
-    north, south, east, west = position
+    north, south, east, west = position #unpack the bounding box coordinates from the position tuple
     
     try:
         #graph object representing the road network in the specified bounding box
