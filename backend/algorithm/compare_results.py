@@ -1,8 +1,9 @@
 import os
 import requests
+import networkx as nx
 
-# Import your engine (to make sure file routing_engine.py stay in the same folder)
-from routing_engine import TaxiRouter
+# Import routing helpers from the engine
+from routing_engine import prepare_graph_for_routing, find_route
 
 def get_osrm_route (orig_coord, dest_coord):
     """
@@ -83,7 +84,7 @@ if __name__ == "__main__":
     MAP_FILE = os.path.join ("data", "map.graphml")
 
     try:
-        router = TaxiRouter (MAP_FILE)
+        G = prepare_graph_for_routing(MAP_FILE)
     except FileNotFoundError:
         print (f"[!] GraphML file not found at '{MAP_FILE}'. Please ensure the file exists.")
         exit(1)
@@ -94,7 +95,18 @@ if __name__ == "__main__":
 
     # 3. Run your routing algorithm
     print ("[*] Running your routing algorithm...")
-    my_result = router.get_route (orig_coord, dest_coord)
+    route_nodes = find_route(G, orig_coord, dest_coord)
+    if route_nodes is None:
+        print("[!] Your routing algorithm could not find a route.")
+        exit(1)
+
+    total_time = nx.classes.function.path_weight(G, route_nodes, weight='travel_time')
+    total_length = nx.classes.function.path_weight(G, route_nodes, weight='length')
+    my_result = {
+        "status": "success",
+        "distance_km": total_length / 1000,
+        "eta_minutes": total_time / 60,
+    }
 
     # 4. Call the OSRM API
     print ("[*] Calling the OSRM API to get the data...")
