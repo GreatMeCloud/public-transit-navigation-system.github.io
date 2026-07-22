@@ -4,7 +4,7 @@ import requests
 # Import your engine (to make sure file routing_engine.py stay in the same folder)
 from routing_engine import TaxiRouter
 
-def get_osrm_route (orig_coords, dest_coords):
+def get_osrm_route (orig_coord, dest_coord):
     """
     Get the route from OSRM API
     """
