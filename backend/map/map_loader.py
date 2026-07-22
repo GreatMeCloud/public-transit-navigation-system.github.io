@@ -13,7 +13,7 @@ def configure_osmnx():
 
 configure_osmnx()
 
-FILE_PATH = os.path.join("data", "map.graphml")
+FILE_PATH = os.path.join(os.path.dirname(__file__), "data", "map.graphml")
 AREA_NAME = "Vaughan, Ontario, Canada" 
 
 def acquire_map_data():
