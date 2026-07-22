@@ -16,11 +16,16 @@ pip install osmnx
 ```
 pip install networkx
 ```
+```
+pip3 install fastapi uvicorn
+```
+```
+pip install folium
+```
 
 ## Structure
-Backend: OSMnx + NetworkX
-
-Frontend: web
+Frontend: Next.js + TypeScript + MapLibre
+Backend: FastAPI + NetworkX + OSMnx + folium
 
 ## Flow chart
 
