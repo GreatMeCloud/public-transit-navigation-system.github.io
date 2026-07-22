@@ -80,14 +80,23 @@ def visualize_graph(G):
         # Automatically open it in the default web browser
         import webbrowser
         webbrowser.open('file://' + os.path.realpath(html_path))
-        
+        return
+
     except ImportError:
         print("[!] Missing required libraries for interactive mapping.")
-        print("[*] Please run in your terminal: pip install folium mapclassify geopandas")
+        print("[*] Please run in your terminal: pip install folium mapclassify geopandas matplotlib")
         print("[*] Falling back to static image...")
-        ox.plot_graph(G, edge_color="#444444", bgcolor="#111111", show=True)
     except Exception as exc:
         print(f"[!] Could not generate interactive graph: {exc}")
+        print("[*] Attempting static image fallback...")
+
+    try:
+        ox.plot_graph(G, edge_color="#444444", bgcolor="#111111", show=True)
+    except ImportError:
+        print("[!] matplotlib is not installed. Static graph plotting is not available.")
+        print("[*] Install it via: pip install matplotlib")
+    except Exception as exc:
+        print(f"[!] Static plotting failed: {exc}")
 
 if __name__ == "__main__":
     # 1. Load/Download the map
