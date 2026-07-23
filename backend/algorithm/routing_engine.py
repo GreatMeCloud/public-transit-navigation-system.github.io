@@ -177,55 +177,120 @@ def find_route (G, origin_coord, dest_coord):
 
 
 
-def draw_route_on_map (G, route_nodes):
+def draw_route_on_map(G, route_nodes):
 
     """
-
-    Draw the route on a folium map
-
+    
+    Draw the route accurately on a folium map by extracting edge geometries.
+    
     """
 
+    if not route_nodes or len(route_nodes) < 2:
 
-
-    if route_nodes is None:
-
-        print ("[!] No route to draw on the map.")
+        print("[!] Not enough nodes to draw a route (start and end might be the same).")
 
         return None
 
 
-
-    print ("[*] Drawing the route on the interaction map...")
-
+    print("[*] Drawing the route on the interaction map...")
 
 
     try:
 
-        # Using the default drawing route of OSMnx by Folium
+        # 1. Get the exact coordinates for the start and end points
+        
+        start_coord = (G.nodes[route_nodes[0]]['y'], G.nodes[route_nodes[0]]['x'])
 
-        m = ox.plot_route_folium (G, route_nodes, route_color="red", weight=5, opacity=0.8)
+        end_coord = (G.nodes[route_nodes[-1]]['y'], G.nodes[route_nodes[-1]]['x'])
+        
+
+        # Initialize map
+        
+        m = folium.Map(location=start_coord, zoom_start=13)
+        
+
+        # 2. Extract the actual physical road curves (geometries) from the graph
+        
+        route_lines = []
+
+        for i in range(len(route_nodes) - 1):
+
+            u = route_nodes[i]
+
+            v = route_nodes[i + 1]
+            
+
+            # OSMnx graphs can have multiple paths between the exact same nodes. 
+            
+            # We grab the edge data and pick the one with the shortest travel time.
+            
+            edge_data = G.get_edge_data(u, v)
+
+            if edge_data:
+
+                best_edge = min(edge_data.values(), key=lambda x: x.get('travel_time', float('inf')))
+                
+
+                # If the road curves, OSMnx stores a LineString geometry
+                
+                if 'geometry' in best_edge:
+
+                    # Extract the coordinates from the LineString
+                    
+                    coords = [(lat, lon) for lon, lat in best_edge['geometry'].coords]
+
+                    route_lines.extend(coords)
 
 
+                else:
+
+                    # If it's a perfectly straight road, just connect the two nodes
+                    
+                    route_lines.extend([
+
+                        (G.nodes[u]['y'], G.nodes[u]['x']),
+
+                        (G.nodes[v]['y'], G.nodes[v]['x'])
+
+                    ])
+
+
+        # 3. Draw the full route line
+        
+        if route_lines:
+
+            folium.PolyLine(route_lines, color="#3388ff", weight=5, opacity=0.8).add_to(m)
+
+        
+        # 4. Add clear markers for Start and Destination
+        
+        folium.Marker(start_coord, popup="Start", icon=folium.Icon(color="green", icon="play")).add_to(m)
+
+        folium.Marker(end_coord, popup="Destination", icon=folium.Icon(color="red", icon="stop")).add_to(m)
+
+        
+        # 5. FORCE the map to zoom correctly so the entire route is visible!
+
+        m.fit_bounds([start_coord, end_coord])
+
+        
+        # Save and open
 
         output_file = "route_map.html"
 
-        m.save (output_file)
+        m.save(output_file)
 
-        print (f"[+] Successfully created the map! Please open the file '{output_file}' in your browser to view the route.")
+        print(f"[+] Successfully created the map! Please open '{output_file}' in your browser.")
 
-
-
-        # Auto open the map in the default web browser
-
+        
         import webbrowser
 
-        webbrowser.open ('file://' + os.path.realpath(output_file))
+        webbrowser.open('file://' + os.path.realpath(output_file))
 
-
-
+        
     except Exception as e:
 
-        print (f"[!] Failed to draw the route on the map: {e}")
+        print(f"[!] Failed to draw the route on the map: {e}")
 
 
 
@@ -255,9 +320,9 @@ if __name__ == "__main__":
 
     # Example coordinates (latitude, longitude)
 
-    origin_coord = (37.7749, -122.4194)  # San Francisco, CA
+    origin_coord = (43.784, -79.525)  # Vaughan, Ontario, Canada
 
-    dest_coord = (37.8044, -122.2711)  # Oakland, CA
+    dest_coord = (43.800, -79.500)  # Vaughan, Ontario, Canada
 
 
 
