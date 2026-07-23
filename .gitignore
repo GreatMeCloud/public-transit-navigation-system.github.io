@@ -1,2 +1,12 @@
+# Python
+__pycache__/
+*.pyc
+
+# Environment
+.env
+
 # Map visualization output
 *.html
+
+# OS files
+.DS_Store
