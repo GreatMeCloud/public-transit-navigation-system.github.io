@@ -1,7 +1,7 @@
 import os
 import osmnx as ox
 
-from map_visualizer import visualize_graph
+#from map_visualizer import visualize_graph
 
 def configure_osmnx():
     """Configure OSMnx settings based on the installed version."""
