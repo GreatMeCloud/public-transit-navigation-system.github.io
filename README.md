@@ -10,17 +10,8 @@ A smart navigation system for public transportation that utilize real-world map 
 
 ## How to run
 ### please install:
-``` 
-pip install osmnx
 ```
-```
-pip install networkx
-```
-```
-pip3 install fastapi uvicorn
-```
-```
-pip install folium
+pip install osmnx networkx fastapi uvicorn folium mapclassify geopandas matplotlib
 ```
 
 ## Structure

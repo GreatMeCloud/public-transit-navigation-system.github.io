@@ -7,24 +7,26 @@ import osmnx as ox
 import folium
 
 
-
-# Set up osmnx configuration
-
-try:
-
-    ox.config(log_console=True, use_cache=False)
-
-except AttributeError:
-
-    print("OSMnx configuration failed. Please ensure you have the correct version of OSMnx installed.")
-
-    ox.settings.use_cache = True
-
-    ox.settings.log_console = False
+def configure_osmnx():
+    """Configure OSMnx settings compatibly across versions."""
+    try:
+        ox.config(use_cache=True, log_console=True)
+    except AttributeError:
+        # older OSMnx exposes settings namespace
+        try:
+            ox.settings.use_cache = True
+            ox.settings.log_console = True
+        except Exception:
+            # best-effort fallback; continue without raising
+            pass
 
 
+configure_osmnx()
 
-FILE_PATH = os.path.join ("data", "map.graphml")
+
+# GraphML file inside backend/map/data (use absolute path)
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+FILE_PATH = os.path.join(BASE_DIR, "map", "data", "map.graphml")
 
 
 
@@ -110,10 +112,42 @@ def find_route (G, origin_coord, dest_coord):
 
 
     # 1. Pull the GPS coordinates of the user to the nearest nodes in the graph
-
     orig_node = ox.distance.nearest_nodes(G, origin_coord[1], origin_coord[0])
-
     dest_node = ox.distance.nearest_nodes(G, dest_coord[1], dest_coord[0])
+
+    # 1.a If the original coordinates are very far from their snapped nodes,
+    # the destination may be outside the loaded graph. Detect that and return
+    # a sentinel so callers can choose to use an external router (OSRM).
+    def haversine_km(a, b):
+        from math import radians, sin, cos, asin, sqrt
+        lat1, lon1 = a
+        lat2, lon2 = b
+        R = 6371.0
+        phi1, phi2 = radians(lat1), radians(lat2)
+        dphi = radians(lat2 - lat1)
+        dlambda = radians(lon2 - lon1)
+        x = sin(dphi/2)**2 + cos(phi1)*cos(phi2)*sin(dlambda/2)**2
+        return 2*R*asin(min(1, sqrt(x)))
+
+    orig_snap = (G.nodes[orig_node]["y"], G.nodes[orig_node]["x"])  # (lat, lon)
+    dest_snap = (G.nodes[dest_node]["y"], G.nodes[dest_node]["x"])  # (lat, lon)
+
+    # threshold (km) beyond which we consider a coordinate outside the graph
+    OUTSIDE_THRESHOLD_KM = 50.0
+    dist_orig = haversine_km(origin_coord, orig_snap)
+    dist_dest = haversine_km(dest_coord, dest_snap)
+
+    if dist_orig > OUTSIDE_THRESHOLD_KM or dist_dest > OUTSIDE_THRESHOLD_KM:
+        print(f"[!] One or both coordinates are far outside the loaded graph (orig: {dist_orig:.1f} km, dest: {dist_dest:.1f} km).")
+        return {
+            "status": "outside_graph",
+            "origin_coord": origin_coord,
+            "dest_coord": dest_coord,
+            "orig_snap": orig_snap,
+            "dest_snap": dest_snap,
+            "orig_node": orig_node,
+            "dest_node": dest_node,
+        }
 
 
 

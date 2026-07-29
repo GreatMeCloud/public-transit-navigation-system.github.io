@@ -2,6 +2,8 @@ import os
 import osmnx as ox
 
 FILE_PATH = os.path.join("data", "map.graphml")
+# Directory where this module's data files live (absolute)
+FILE_DIR = os.path.join(os.path.dirname(__file__), "data")
 
 def visualize_graph(G):
     """Draw an interactive map of the street network"""
@@ -18,7 +20,7 @@ def visualize_graph(G):
         # You can change tiles to "CartoDB positron" for a light theme
         m = edges.explore(color="cyan", weight=2, tiles="CartoDB dark_matter")
         
-        html_path = os.path.join(os.path.dirname(FILE_PATH), "interactive_map.html")
+        html_path = os.path.join(FILE_DIR, "interactive_map.html")
         m.save(html_path)
         print(f"[+] Interactive map successfully saved to: {html_path}")
         

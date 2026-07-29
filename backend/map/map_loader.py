@@ -1,7 +1,18 @@
 import os
 import osmnx as ox
 
-#from map_visualizer import visualize_graph
+# Try to import the visualization helper from the sibling module.
+# Use both absolute and relative imports and provide a simple fallback
+# so running this loader won't fail when visualization dependencies
+# are missing or when running as a package vs script.
+try:
+    from map_visualizer import visualize_graph
+except Exception:
+    try:
+        from .map_visualizer import visualize_graph
+    except Exception:
+        def visualize_graph(G):
+            print("[!] visualize_graph unavailable; skipping visualization.")
 
 def configure_osmnx():
     """Configure OSMnx settings based on the installed version."""

@@ -1,5 +1,6 @@
 import os
 import requests
+import osmnx as ox
 import networkx as nx
 
 # Import routing helpers from the engine
@@ -81,7 +82,9 @@ def compare_and_evaluate (my_result, api_result):
 
 if __name__ == "__main__":
     # 1. Initialize the Engine
-    MAP_FILE = os.path.join ("data", "map.graphml")
+    # Ensure MAP_FILE points to backend/map/data/map.graphml regardless of cwd
+    BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    MAP_FILE = os.path.join(BASE_DIR, "map", "data", "map.graphml")
 
     try:
         G = prepare_graph_for_routing(MAP_FILE)
@@ -91,7 +94,7 @@ if __name__ == "__main__":
 
     # 2. Define the coordinates for the test
     orig_coord = (43.784, -79.525)  # Vaughan, Canada
-    dest_coord = (43.800, -79.500)
+    dest_coord = (64.172, -111.766)  # Another location
 
     # 3. Run your routing algorithm
     print ("[*] Running your routing algorithm...")
@@ -99,6 +102,19 @@ if __name__ == "__main__":
     if route_nodes is None:
         print("[!] Your routing algorithm could not find a route.")
         exit(1)
+
+    # If the routing engine indicates the endpoints are outside the loaded
+    # graph, fall back to using OSRM for the full journey (option 1).
+    if isinstance(route_nodes, dict) and route_nodes.get("status") == "outside_graph":
+        print("[!] Endpoints are outside the loaded graph — using OSRM for routing.")
+        api_result = get_osrm_route(orig_coord, dest_coord)
+        if api_result.get("status") == "success":
+            print("\n=== OSRM-only result ===")
+            print(f"Distance: {api_result['distance_km']:.2f} km")
+            print(f"ETA: {api_result['eta_minutes']:.1f} minutes")
+        else:
+            print(f"[!] OSRM request failed: {api_result.get('message')}")
+        exit(0)
 
     total_time = nx.classes.function.path_weight(G, route_nodes, weight='travel_time')
     total_length = nx.classes.function.path_weight(G, route_nodes, weight='length')
@@ -109,8 +125,21 @@ if __name__ == "__main__":
     }
 
     # 4. Call the OSRM API
-    print ("[*] Calling the OSRM API to get the data...")
-    api_result = get_osrm_route (orig_coord, dest_coord)
+    # Use the snapped start/end node coordinates for a fair comparison with the
+    # routing computed on the local graph. This avoids comparing a local-route
+    # within the graph to an OSRM route between the original (possibly out-of-area)
+    # coordinates.
+    try:
+        start_node = route_nodes[0]
+        end_node = route_nodes[-1]
+        start_coord_snapped = (G.nodes[start_node]["y"], G.nodes[start_node]["x"])  # (lat, lon)
+        end_coord_snapped = (G.nodes[end_node]["y"], G.nodes[end_node]["x"])  # (lat, lon)
+    except Exception:
+        print("[!] Could not determine snapped node coordinates for OSRM call.")
+        api_result = {"status": "error", "message": "snapping_failed"}
+    else:
+        print ("[*] Calling the OSRM API using snapped node coordinates...")
+        api_result = get_osrm_route (start_coord_snapped, end_coord_snapped)
 
     #5. Compare and evaluate the results
     if my_result["status"] == "success" and api_result["status"] == "success":
