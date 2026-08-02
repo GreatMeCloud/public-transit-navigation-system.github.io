@@ -1,4 +1,3 @@
-#FastAPI
 from fastapi import FastAPI
 from api.routes import router
 
