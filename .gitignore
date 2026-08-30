@@ -1,12 +1,41 @@
-# Python
-__pycache__/
-*.pyc
+# Dependencies
+node_modules/
 
-# Environment
+# Next.js
+.next/
+out/
+
+# Production
+build/
+dist/
+
+# Environment variables
 .env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# Map visualization output
-backend/**/*.html
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
 
-# OS files
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Testing
+coverage/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
 .DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
